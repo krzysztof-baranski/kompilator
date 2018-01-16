@@ -14,7 +14,7 @@
 using namespace std;
 
 //struktura przechowuj¹ca dane tablicy
-struct arrayStruct{
+struct arrayStruct {
 	int array_argType; //typ argumentów tablicy
 	int array_start; //indeks pocz¹tkowy
 	int array_stop; //indeks koñcowy
@@ -23,7 +23,7 @@ struct arrayStruct{
 };
 
 //struktura reprezentuj¹ca wpis w tablicy symboli
-struct symbol{
+struct symbol {
 	string name; //nazwa
 	int type;	//real lub integer lub none
 	int address; //adres przydzielony
@@ -31,7 +31,7 @@ struct symbol{
 	bool global;	//zmianna lokalna czy globalna
 	bool reference;	//czy referencja
 	arrayStruct array; //dane dla tablicy
-	list<pair<int,arrayStruct>> parameters; //lista parametrów funkcji/procedury
+	list<pair<int, arrayStruct> > parameters; //lista parametrów funkcji/procedury
 		// pair, bo: int to indeks w tablicy symboli, arrayStruct to jesli jest przekazywana tablica  
 };
 

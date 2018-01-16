@@ -18,9 +18,9 @@ int main (int argc, char *argv[]) {
 	} else if (argc == 2) {
 		inputFileName = argv[1];
 	}
-	
+
 	inputFile = fopen(inputFileName, "r");
-	
+
 	if (!inputFile) {
 		cerr << "Nie znaleniono pliku o takiej nazwie" << '\n';
 		return -1;
