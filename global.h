@@ -10,7 +10,6 @@
 #include <ctype.h>
 #include <string.h>
 
-
 using namespace std;
 
 //struktura przechowuj¹ca dane tablicy
@@ -47,18 +46,21 @@ int yylex_destroy();
 int yyparse();	//uruchamia parser
 void yyerror(char const* s);	//funkcja do ob³ugi b³êdu parsera
 
-int addToST(const char* s, int type, int token); //dodaje element do tablicy symboli
+int addToSymbolTable(const char* s, int type, int token); //dodaje element do tablicy symboli
 int addNum(const char*, int);	//wstawia liczbê od tablicy symboli, jeœli ta jej nie zawiera
 int generateLabel(); //tworzy now¹ etykietê do skoku
 int generateTmpVar(int type); //tworzy now¹ zmienn¹ tymczasow¹
 int generateVarPosition(string symName=""); //zwraca indeks, pod którym bêdzie nowa zmienna
-int generateResultType(int a,int b); //zwraca typ zmiennej wynikowej
-int lookup(const char* s, int flag);
+int getResultType(int a,int b); //zwraca typ zmiennej wynikowej
+//int lookup(const char* s, int flag);
+int findSymbolIndexByName(const char* symbolName); // przeszukuje tablic� symboli po nazwach
+int findSymbolIndexByScope(const char* symbolName);  // przeszukuje tablic� symboli po nazwach, ale w zaleznosci czy global czy local
+int findSymbolIndexIfProcOrFunc(const char* symbolName); // przeszukuje tablic� symboli szukajac funkcji lub procedury
 int getSymbolSize(symbol sym); //zwraca rozmiar elementu
-string tokenToStr(int token);	//zwraca string dla tokena
-void emitOne(int op, int var, bool value);
-void emitTwo(int op, int lVar, bool lValue, int resultVar, bool resultValue);
-void emitThree(int op, int lVar, bool lValue, int rVar, bool rValue, int resultVar, bool resultValue);
+string tokenToString(int token);	//zwraca string dla tokena
+void generateOneArgOperation(int token, int var, bool value);
+void generateTwoArgsOperation(int token, int leftVar, bool leftValue, int resultVar, bool resultValue);
+void generateThreeArgsOperation(int token, int leftVar, bool leftValue, int rightVar, bool rightValue, int resultVar, bool resultValue);
 void writeToOut(const char* s); //bezpoœredni zapis do pliku
 void clearLocalVars();
 void saveToFile(); //zapisuje wszystko do pliku wyjœciowego

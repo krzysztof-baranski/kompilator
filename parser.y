@@ -167,7 +167,7 @@ subprogram_declarations :
 subprogram_declaration :
 	subprogram_head declarations compound_statement	{
 		writeToOut("\n\tleave");
-		emitOne(RETURN_TKN, -1, true);
+		generateOneArgOperation(RETURN_TKN, -1, true);
 		printSymtable();
 		clearLocalVars(); //czyszczenie zmiennych lokalnych funkcji
 		isGlobal = true; //po wyjściu z funkcji/procedury zmienia zakres na globalny
@@ -183,7 +183,7 @@ subprogram_head :
 		}
 		symbolTable[id].token = FUNCTION_TKN;
 		isGlobal = false; //zmiana zakresu z globalnego na lokalny
-		emitOne(FUNCTION_TKN, id, true); //wypisuje etykietę funkcji
+		generateOneArgOperation(FUNCTION_TKN, id, true); //wypisuje etykietę funkcji
 		paramsOffset = 12; //offset dla funkcji 12
 	}
 	arguments	{
@@ -195,7 +195,7 @@ subprogram_head :
 		int type = $7;
 		int id = $2;
 		symbolTable[id].type = type;
-		int returnVar = addToST(symbolTable[id].name.c_str(), type, VAR_TKN); //zmienna przechowująca wartość zwracana
+		int returnVar = addToSymbolTable(symbolTable[id].name.c_str(), type, VAR_TKN); //zmienna przechowująca wartość zwracana
 		symbolTable[returnVar].reference = true;
 		symbolTable[returnVar].address = 8;
 	}
@@ -207,7 +207,7 @@ subprogram_head :
 		}
 		symbolTable[id].token = PROCEDURE_TKN;
 		isGlobal = false;
-		emitOne(PROCEDURE_TKN, id, true); //wypisuje etykietę procedury
+		generateOneArgOperation(PROCEDURE_TKN, id, true); //wypisuje etykietę procedury
 		paramsOffset = 8; //offset dla procedury 8
 	}
 	arguments	{
@@ -290,7 +290,7 @@ statement :
 	variable ASSIGNOP_TKN expression	{
 		int var = $1;
 		int expression = $3;
-		emitTwo(ASSIGNOP_TKN, expression, true, var, true);
+		generateTwoArgsOperation(ASSIGNOP_TKN, expression, true, var, true);
 	}
 	| procedure_statement
 	| compound_statement
@@ -300,34 +300,34 @@ statement :
 		int expression = $2;
 
 		//skok dla warunku niespełnionego
-		emitThree(EQ_TKN, expression, true, newNum, true, lab1, true);
+		generateThreeArgsOperation(EQ_TKN, expression, true, newNum, true, lab1, true);
 		$2 = lab1;
 	}
 		THEN_TKN statement	{
 			//etykieta dla statement, jump do statement po else, wypisanie etykiety statement
 			int lab2 = generateLabel();
 			$5 = lab2;
-			emitOne(JUMP_TKN, lab2, true); //skacze do statement label($5)
-			emitOne(LABEL_TKN, $2, true); //etykieta dla $2
+			generateOneArgOperation(JUMP_TKN, lab2, true); //skacze do statement label($5)
+			generateOneArgOperation(LABEL_TKN, $2, true); //etykieta dla $2
 		}
 		ELSE_TKN statement	{
-			emitOne(LABEL_TKN, $5, true); //etykieta dla $5
+			generateOneArgOperation(LABEL_TKN, $5, true); //etykieta dla $5
 		}
 	| WHILE_TKN	{
 			int start = generateLabel();
 			int stop = generateLabel();
 			$1 = start;
 			$$ = stop;
-			emitOne(LABEL_TKN, start, true);
+			generateOneArgOperation(LABEL_TKN, start, true);
 		}
 		expression DO_TKN	{
 			//jeżeli warunek jest niespełniony,  to skacz do stop
 			int num1 = addNum("0", INTEGER_TKN);
-			emitThree(EQ_TKN, $3, true, num1, true, $2, true);
+			generateThreeArgsOperation(EQ_TKN, $3, true, num1, true, $2, true);
 		}
 		statement { 
-			emitOne(JUMP_TKN, $1, true);
-			emitOne(LABEL_TKN, $2, true);
+			generateOneArgOperation(JUMP_TKN, $1, true);
+			generateOneArgOperation(LABEL_TKN, $2, true);
 		}
 	;
 
@@ -344,13 +344,13 @@ variable :
 		int index = $3;
 		if (symbolTable[index].type == REAL_TKN) { 
 			int value = generateTmpVar(INTEGER_TKN);
-			emitTwo(REALTOINT_TKN, index, true, value, true);
+			generateTwoArgsOperation(REALTOINT_TKN, index, true, value, true);
 			index = value;
 		}
 		int id = $1;
 		int start = symbolTable[id].array.array_start;
 		int rIndex = generateTmpVar(INTEGER_TKN);
-		emitThree(MINUS_TKN, index, true, start, true, rIndex, true); //odejmuje od indeksu indeks początkowy
+		generateThreeArgsOperation(MINUS_TKN, index, true, start, true, rIndex, true); //odejmuje od indeksu indeks początkowy
 
 		int arrayElemSize = 0;
 		if (symbolTable[id].type == REAL_TKN) { 
@@ -359,10 +359,10 @@ variable :
 		else if (symbolTable[id].type == INTEGER_TKN) { 
 			arrayElemSize = addNum("4", INTEGER_TKN);
 		}
-		emitThree(MUL_TKN, rIndex, true, arrayElemSize, true, rIndex, true); //element*pozycja
+		generateThreeArgsOperation(MUL_TKN, rIndex, true, arrayElemSize, true, rIndex, true); //element*pozycja
 
 		int varArrayAddress = generateTmpVar(INTEGER_TKN);
-		emitThree(PLUS_TKN, id, false, rIndex, true, varArrayAddress, true); //adres poczatku tablicy + adres elementu tablicy
+		generateThreeArgsOperation(PLUS_TKN, id, false, rIndex, true, varArrayAddress, true); //adres poczatku tablicy + adres elementu tablicy
 
 		symbolTable[varArrayAddress].type = symbolTable[id].type;
 		symbolTable[varArrayAddress].reference = true;
@@ -385,7 +385,7 @@ procedure_statement :
 				yyerror("Nieprawidłowa liczba argumentów");
 				YYERROR;
 			}
-			emitOne(CALL_TKN, proc, true);
+			generateOneArgOperation(CALL_TKN, proc, true);
 		}
 		else { 
 			yyerror("Oczekiwano nazwy procedury/funkcji");
@@ -395,20 +395,20 @@ procedure_statement :
 	| ID_TKN '(' expression_list ')'	{
 		//dla wywołania z parametrami
 		int ind = $1;
-		int write = lookup("write", 0);
-		int read = lookup("read", 0);
+		int write = findSymbolIndexByName("write");
+		int read = findSymbolIndexByName("read");
 		if (ind == write || ind == read) { 
 			for (int i = 0; i < argumentsTmp.size(); i++) { 
 				if (ind == read) { 
-					emitOne(READ_TKN, argumentsTmp[i], true);
+					generateOneArgOperation(READ_TKN, argumentsTmp[i], true);
 				}
 				else if (ind == write) { 
-					emitOne(WRITE_TKN, argumentsTmp[i], true);
+					generateOneArgOperation(WRITE_TKN, argumentsTmp[i], true);
 				}
 			}
 		} else {
 			string name = symbolTable[ind].name;
-			int index = lookup(name.c_str(), 2);
+			int index = findSymbolIndexIfProcOrFunc(name.c_str());
 			if (index == -1) { 
 				yyerror("Nazwa niezadeklaowana");
 				YYERROR;
@@ -438,7 +438,7 @@ procedure_statement :
 					int tmpIndex = argumentsTmp[i];
 					if (symbolTable[tmpIndex].token == NUM_TKN) { 
 						int num = generateTmpVar(argType);
-						emitTwo(ASSIGNOP_TKN, tmpIndex, true, num, true);
+						generateTwoArgsOperation(ASSIGNOP_TKN, tmpIndex, true, num, true);
 						id = num;
 					}
 
@@ -448,11 +448,11 @@ procedure_statement :
 					//gdy typ argumentu i wartości przekzaywanej są różne
 					if (argType != passType) { 
 						int tmpVar = generateTmpVar(argType);
-						emitTwo(ASSIGNOP_TKN, id, true, tmpVar, true);
+						generateTwoArgsOperation(ASSIGNOP_TKN, id, true, tmpVar, true);
 						id = tmpVar;
 					}
 
-					emitOne(PUSH_TKN, id, false);
+					generateOneArgOperation(PUSH_TKN, id, false);
 					incspCounter+=4;
 					it++;
 				}
@@ -464,13 +464,13 @@ procedure_statement :
 				}
 
 				//call
-				emitOne(CALL_TKN, index, true);
+				generateOneArgOperation(CALL_TKN, index, true);
 				stringstream ss;
 				ss << incspCounter;
 
 				//inscp
 				int incspNum = addNum(ss.str().c_str(), INTEGER_TKN);
-				emitOne(INCSP_TKN, incspNum, true);
+				generateOneArgOperation(INCSP_TKN, incspNum, true);
 			}
 			else { 
 				yyerror("Nie znaleziono funkcji/procedury");
@@ -503,26 +503,26 @@ expression :
 		int rightSE = $3;
 
 		//jeżeli spełniony warunek to skacz
-		emitThree(relopType, leftSE, true, rightSE, true, newLab, true);
+		generateThreeArgsOperation(relopType, leftSE, true, rightSE, true, newLab, true);
 
 		//wynik operacji relop
 		int resVar = generateTmpVar(INTEGER_TKN);
 		int bVal = addNum("0", INTEGER_TKN);
 
 		//ustawia resVar na 0
-		emitTwo(ASSIGNOP_TKN,  bVal, true, resVar, true);
+		generateTwoArgsOperation(ASSIGNOP_TKN,  bVal, true, resVar, true);
 
 		//ostatni label, potem dalsza część programu
 		int finishLabel = generateLabel();
-		emitOne(JUMP_TKN, finishLabel, true);
+		generateOneArgOperation(JUMP_TKN, finishLabel, true);
 
 		//spełniony warunek
-		emitOne(LABEL_TKN, newLab, true);
+		generateOneArgOperation(LABEL_TKN, newLab, true);
 		int gVal = addNum("1", INTEGER_TKN);
-		emitTwo(ASSIGNOP_TKN, gVal, true, resVar, true);
+		generateTwoArgsOperation(ASSIGNOP_TKN, gVal, true, resVar, true);
 
 		//etykieta za całym wyrażeniem
-		emitOne(LABEL_TKN, finishLabel, true);
+		generateOneArgOperation(LABEL_TKN, finishLabel, true);
 		$$ = resVar;
 	}
 	;
@@ -539,22 +539,22 @@ simple_expression :
 			//w przypadku liczb ujemnych
 			$$ = generateTmpVar(symbolTable[term].type);
 			int tmpVar = addNum("0", symbolTable[term].type);
-			emitThree(tmpToken, tmpVar, true, term, true, $$, true); //odejmuje wartość od 0
+			generateThreeArgsOperation(tmpToken, tmpVar, true, term, true, $$, true); //odejmuje wartość od 0
 		}
 	}
 	| simple_expression SIGN_TKN term	{
 		int se = $1;
 		int sign = $2;
 		int term = $3;
-		int resType = generateResultType(se, term);
+		int resType = getResultType(se, term);
 		$$ = generateTmpVar(resType);
-		emitThree(sign, se, true, term, true, $$, true);
+		generateThreeArgsOperation(sign, se, true, term, true, $$, true);
 	}
 	| simple_expression OR_TKN term{
 		int se = $1;
 		int term = $3;
 		int resVar = generateTmpVar(INTEGER_TKN);
-		emitThree(OR_TKN, se, true, term, true, resVar, true);
+		generateThreeArgsOperation(OR_TKN, se, true, term, true, resVar, true);
 		$$ = resVar;
 	}
 	;
@@ -565,9 +565,9 @@ term :
 		int term = $1;
 		int mulop = $2;
 		int factor = $3;
-		int resType = generateResultType(term, factor);
+		int resType = getResultType(term, factor);
 		int tmpVar = generateTmpVar(resType);
-		emitThree(mulop, term, true, factor, true, tmpVar, true);
+		generateThreeArgsOperation(mulop, term, true, factor, true, tmpVar, true);
 		$$ = tmpVar;
 	}
 	;
@@ -581,7 +581,7 @@ factor :
 				YYERROR;
 			}
 			id = generateTmpVar(symbolTable[id].type);//nowa zmienna na wartośc zwracaną przez funkcję
-			emitOne(PUSH_TKN, id, false);
+			generateOneArgOperation(PUSH_TKN, id, false);
 			writeToOut(string("\n\tcall.i #").c_str());
 			writeToOut(symbolTable[$1].name.c_str());
 
@@ -597,7 +597,7 @@ factor :
 	| ID_TKN '(' expression_list ')'	{
 		int idT = $1;
 		string name = symbolTable[idT].name;
-		int index = lookup(name.c_str(), 2);
+		int index = findSymbolIndexIfProcOrFunc(name.c_str());
 
 		if (index == -1) { 
 			yyerror("Nazwa niezadeklarowana");
@@ -628,7 +628,7 @@ factor :
 				int tmpIndex = argumentsTmp[i];
 				if (symbolTable[tmpIndex].token == NUM_TKN) { 
 					int numVar = generateTmpVar(argType);
-					emitTwo(ASSIGNOP_TKN, tmpIndex, true, numVar, true);
+					generateTwoArgsOperation(ASSIGNOP_TKN, tmpIndex, true, numVar, true);
 					id = numVar;
 				}
 
@@ -637,10 +637,10 @@ factor :
 				//gdy typ argumentu i wartości przekzaywanej są różne
 				if (argType != passType) { 
 					int tmpVar = generateTmpVar(argType);
-					emitTwo(ASSIGNOP_TKN, id, true, tmpVar, true);
+					generateTwoArgsOperation(ASSIGNOP_TKN, id, true, tmpVar, true);
 					id = tmpVar;
 				}
-				emitOne(PUSH_TKN, id, false);
+				generateOneArgOperation(PUSH_TKN, id, false);
 				incspCounter+=4;
 				it++;
 			}
@@ -650,19 +650,19 @@ factor :
 			}
 
 			int id = generateTmpVar(symbolTable[index].type);
-			emitOne(PUSH_TKN, id, false);
+			generateOneArgOperation(PUSH_TKN, id, false);
 			incspCounter+=4;
 			$$ = id;
 
 			//call
-			emitOne(CALL_TKN, index, true);
+			generateOneArgOperation(CALL_TKN, index, true);
 
 			stringstream ss;
 			ss << incspCounter;
 
 			//incsp
 			int inum = addNum(ss.str().c_str(), INTEGER_TKN);
-			emitOne(INCSP_TKN, inum, true);
+			generateOneArgOperation(INCSP_TKN, inum, true);
 		}
 		else if (symbolTable[index].token == PROCEDURE_TKN) { 
 			yyerror("Procedura nie może zwracać wartości");
@@ -681,19 +681,19 @@ factor :
 		int id = addNum("0", INTEGER_TKN);
 		int factor = $2;
 
-		emitThree(EQ_TKN, factor, true, id, true, label, true);//jeq, jeżeli facotr=0 to skacz do 1
+		generateThreeArgsOperation(EQ_TKN, factor, true, id, true, label, true);//jeq, jeżeli facotr=0 to skacz do 1
 
 		int noResultVar = generateTmpVar(INTEGER_TKN);
-		emitTwo(ASSIGNOP_TKN, id, true, noResultVar, true);
+		generateTwoArgsOperation(ASSIGNOP_TKN, id, true, noResultVar, true);
 
 		int finishLabel = generateLabel();
-		emitOne(JUMP_TKN, finishLabel, true); //jump na koniec
-		emitOne(LABEL_TKN, label, true);
+		generateOneArgOperation(JUMP_TKN, finishLabel, true); //jump na koniec
+		generateOneArgOperation(LABEL_TKN, label, true);
 
 		int numVar = addNum("1", INTEGER_TKN);
-		emitTwo(ASSIGNOP_TKN, numVar, true, noResultVar, true);//jezeli factor był 0 to zapisuje 1
+		generateTwoArgsOperation(ASSIGNOP_TKN, numVar, true, noResultVar, true);//jezeli factor był 0 to zapisuje 1
 
-		emitOne(LABEL_TKN, finishLabel, true);
+		generateOneArgOperation(LABEL_TKN, finishLabel, true);
 		$$ = noResultVar;
 	}
 	;
