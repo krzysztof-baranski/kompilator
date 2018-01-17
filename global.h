@@ -22,20 +22,20 @@ struct arrayStruct {
 };
 
 //struktura reprezentujÂ¹ca wpis w tablicy symboli
-struct symbol {
-	string name; //nazwa
-	int type;	//real lub integer lub none
-	int address; //adres przydzielony
-	int token;	//typ tokenu
-	bool global;	//zmianna lokalna czy globalna
-	bool reference;	//czy referencja
+struct symbolStruct {
+	string symbol_name; //nazwa
+	int symbol_type;	//real lub integer lub none
+	int symbol_address; //adres przydzielony
+	int symbol_token;	//typ tokenu
+	bool is_global;	//zmianna lokalna czy globalna
+	bool is_reference;	//czy referencja
 	arrayStruct array; //dane dla tablicy
 	list<pair<int, arrayStruct> > parameters; //lista parametrÃ³w funkcji/procedury
 		// pair, bo: int to indeks w tablicy symboli, arrayStruct to jesli jest przekazywana tablica  
 };
 
 // extern oznacza ze deklaracja jest w innym miejscu
-extern vector<symbol> symbolTable;	//tablica symboli0
+extern vector<symbolStruct> symbolTable;	//tablica symboli0
 extern FILE* yyin;	//plik wejÅ›ciowy dla lexera
 extern bool isGlobal; //jeÂ¿eli true to zmienna globalna, jeÂ¿eli false to zmienna lokalna
 extern int lineno; //numer linii
@@ -56,7 +56,7 @@ int getResultType(int a,int b); //zwraca typ zmiennej wynikowej
 int findSymbolIndexByName(const char* symbolName); // przeszukuje tablicê symboli po nazwach
 int findSymbolIndexByScope(const char* symbolName);  // przeszukuje tablicê symboli po nazwach, ale w zaleznosci czy global czy local
 int findSymbolIndexIfProcOrFunc(const char* symbolName); // przeszukuje tablicê symboli szukajac funkcji lub procedury
-int getSymbolSize(symbol sym); //zwraca rozmiar elementu
+int getSymbolSize(symbolStruct sym); //zwraca rozmiar elementu
 string tokenToString(int token);	//zwraca string dla tokena
 void generateOneArgOperation(int token, int var, bool value);
 void generateTwoArgsOperation(int token, int leftVar, bool leftValue, int resultVar, bool resultValue);

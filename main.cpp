@@ -10,7 +10,7 @@ int main (int argc, char *argv[]) {
 	const char* outputFileName = "output.asm";
 	FILE* inputFile;
 	stringstream stringStream;
-	symbol lab0, write, read;
+	symbolStruct lab0, write, read;
 
 	if (argc < 2) {
 		cerr << "Nie podano pliku do przetworzenia" << '\n';
@@ -35,25 +35,25 @@ int main (int argc, char *argv[]) {
 		return -1;
 	}
 
-	read.name 		= string("read");
-	read.token 		= PROCEDURE_TKN;
-	read.global 	= true;
-	read.reference 	= false;
+	read.symbol_name 	= string("read");
+	read.symbol_token 	= PROCEDURE_TKN;
+	read.is_global 		= true;
+	read.is_reference 	= false;
 	symbolTable.push_back(read);
 
-	write.name 		= string("write");
-	write.token 	= PROCEDURE_TKN;
-	write.global 	= true;
-	write.reference = false;
+	write.symbol_name 	= string("write");
+	write.symbol_token 	= PROCEDURE_TKN;
+	write.is_global 	= true;
+	write.is_reference	= false;
 	symbolTable.push_back(write);
 
-	lab0.name 		= string("lab0");
-	lab0.token 		= LABEL_TKN;
-	lab0.global 	= true;
-	lab0.reference 	= false;
+	lab0.symbol_name 	= string("lab0");
+	lab0.symbol_token 	= LABEL_TKN;
+	lab0.is_global 		= true;
+	lab0.is_reference 	= false;
 	symbolTable.push_back(lab0);
 
-	stringStream << "\tjump.i #" << lab0.name;
+	stringStream << "\tjump.i #" << lab0.symbol_name;
 	stream.write(stringStream.str().c_str(), stringStream.str().size());
 
 	yyparse();
