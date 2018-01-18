@@ -57,7 +57,7 @@ int main (int argc, char *argv[]) {
 	stream.write(stringStream.str().c_str(), stringStream.str().size());
 
 	yyparse();
-	printSymtable();
+	printSymbolTable();
 	stream.close();
 	fclose(inputFile);
 	yylex_destroy();

@@ -64,4 +64,4 @@ void generateThreeArgsOperation(int token, int leftVar, bool leftValue, int righ
 void writeToOut(const char* s); //bezpoœredni zapis do pliku
 void clearLocalVars();
 void saveToFile(); //zapisuje wszystko do pliku wyjœciowego
-void printSymtable();	//wypisuje elementy z tablicy symboli
+void printSymbolTable();	//wypisuje elementy z tablicy symboli

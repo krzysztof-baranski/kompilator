@@ -10,6 +10,7 @@ int tmpVarCounter = 0; //licznik dla zmiennych pomocniczych
 int addToSymbolTable (const char* s, int type, int token) {
 	symbolStruct sym;
 	string name(s);
+	
 	sym.symbol_name = name;
 	sym.symbol_token = token;
 	sym.symbol_type = type;
@@ -20,6 +21,7 @@ int addToSymbolTable (const char* s, int type, int token) {
 
 	return symbolTable.size() - 1;
 }
+
 int generateLabel () {
 	stringstream stringStream;
 	stringStream << "lab" << labelCounter++;
@@ -64,6 +66,7 @@ int getSymbolSize (symbolStruct sym) {
 //zwraca pozycję dla alokowanej zmiennej w części lokalnej i globalnej
 int generateVarPosition (string name) {
 	int position = 0;
+	
 	if (isGlobal) {
 		for (int i = 0; i < symbolTable.size(); i++) {
 			if (!symbolTable[i].is_global) {
@@ -107,7 +110,7 @@ int findSymbolIndexByName (const char* symbolName) {
 
 int findSymbolIndexByScope (const char* symbolName) {
 	int i = symbolTable.size() - 1;
-	if (isGlobal) {  //przeszukujemy w zakresie globalnym od końca
+	if (isGlobal) {  //przeszukujemy w zakresie globalnym
 		for (i; i >= 0; i--) { //przeszukiwanie części globalnej
 			if (symbolTable[i].symbol_name == symbolName) { //znaleziono w części globalnej
 				return i;
@@ -225,7 +228,7 @@ string tokenToString (int token) {
 //	else return string("Inny token");
 }
 
-void printSymtable () {
+void printSymbolTable () {
 	cout << "\nSymbol Table\n";
 	for (int i = 0; i < symbolTable.size(); i++) {
 		symbolStruct sym = symbolTable[i];

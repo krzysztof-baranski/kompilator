@@ -73,7 +73,6 @@ program:
 	declarations
 	subprogram_declarations	{
 		writeToOut("\nlab0:");
-
 	}
 	compound_statement '.'	{
 		writeToOut("\n\texit\n");
@@ -168,7 +167,7 @@ subprogram_declaration :
 	subprogram_head declarations compound_statement	{
 		writeToOut("\n\tleave");
 		generateOneArgOperation(RETURN_TKN, -1, true);
-		printSymtable();
+		printSymbolTable();
 		clearLocalVars(); //czyszczenie zmiennych lokalnych funkcji
 		isGlobal = true; //po wyjściu z funkcji/procedury zmienia zakres na globalny
 		paramsOffset = 8;
