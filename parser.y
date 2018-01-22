@@ -121,14 +121,12 @@ declarations :
 				symbolTable[index].symbol_type = type;
 				symbolTable[index].symbol_token = VAR_TKN;
 				symbolTable[index].symbol_address = generateVarPosition(symbolTable[index].symbol_name);//obliczenie adresu
-			}
-			else if (type == ARRAY_TKN) { 
+			} else if (type == ARRAY_TKN) { 
 				symbolTable[index].symbol_token = type;
 				symbolTable[index].symbol_type = arrayType;
 				symbolTable[index].array = arrayTmp;
 				symbolTable[index].symbol_address = generateVarPosition(symbolTable[index].symbol_name);
-			}
-			else { 
+			} else { 
 				yyerror("Błędny typ");
 				YYERROR;
 			}
@@ -223,7 +221,7 @@ arguments :
 		list<int>::iterator it = funParams.begin();
 		for(it; it != funParams.end(); it++) { 
 			symbolTable[*it].symbol_address = paramsOffset;
-			paramsOffset+=4;
+			paramsOffset += 4;
 		}
 		funParams.clear();
 	}
@@ -243,6 +241,8 @@ parameter_list :
 			}
 			else { 
 				symbolTable[index].symbol_type = type;
+				
+				symbolTable[index].symbol_token = type;
 			}
 			parameters.push_back(make_pair(type, arrayTmp)); //dodawanie do listy argumentów
 			funParams.push_front(argumentsTmp[i]);
@@ -363,7 +363,7 @@ variable :
 		int varArrayAddress = generateTmpVar(INTEGER_TKN);
 		generateThreeArgsOperation(PLUS_TKN, id, false, rIndex, true, varArrayAddress, true); //adres poczatku tablicy + adres elementu tablicy
 
-		symbolTable[varArrayAddress].symbol_type = symbolTable[id].type;
+		symbolTable[varArrayAddress].symbol_type = symbolTable[id].symbol_type;
 		symbolTable[varArrayAddress].is_reference = true;
 		$$ = varArrayAddress;
 	}
@@ -400,8 +400,7 @@ procedure_statement :
 			for (int i = 0; i < argumentsTmp.size(); i++) { 
 				if (ind == read) { 
 					generateOneArgOperation(READ_TKN, argumentsTmp[i], true);
-				}
-				else if (ind == write) { 
+				} else if (ind == write) { 
 					generateOneArgOperation(WRITE_TKN, argumentsTmp[i], true);
 				}
 			}
@@ -452,7 +451,7 @@ procedure_statement :
 					}
 
 					generateOneArgOperation(PUSH_TKN, id, false);
-					incspCounter+=4;
+					incspCounter += 4;
 					it++;
 				}
 
@@ -549,7 +548,7 @@ simple_expression :
 		$$ = generateTmpVar(resType);
 		generateThreeArgsOperation(sign, se, true, term, true, $$, true);
 	}
-	| simple_expression OR_TKN term{
+	| simple_expression OR_TKN term {
 		int se = $1;
 		int term = $3;
 		int resVar = generateTmpVar(INTEGER_TKN);
@@ -575,7 +574,7 @@ factor :
 	variable	{
 		int id = $1;
 		if (symbolTable[id].symbol_token == FUNCTION_TKN) {
-			if (symbolTable[id].parameters.size()>0) { 
+			if (symbolTable[id].parameters.size() > 0) { 
 				yyerror("Wywołanie funkcji bez odpowiedniej liczby argumentów");
 				YYERROR;
 			}
@@ -640,7 +639,7 @@ factor :
 					id = tmpVar;
 				}
 				generateOneArgOperation(PUSH_TKN, id, false);
-				incspCounter+=4;
+				incspCounter += 4;
 				it++;
 			}
 			int argsSize = argumentsTmp.size();
@@ -650,7 +649,7 @@ factor :
 
 			int id = generateTmpVar(symbolTable[index].symbol_type);
 			generateOneArgOperation(PUSH_TKN, id, false);
-			incspCounter+=4;
+			incspCounter += 4;
 			$$ = id;
 
 			//call

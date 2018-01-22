@@ -18,7 +18,7 @@ int addToSymbolTable (const char* s, int type, int token) {
 	sym.is_reference = false;
 	sym.symbol_address = 0;
 	symbolTable.push_back(sym);
-
+	cout << "addtost " << name << " " << type << " " << sym.symbol_type << " " << tokenToString(sym.symbol_type) << " " << tokenToString(sym.symbol_token) << endl; 
 	return symbolTable.size() - 1;
 }
 
@@ -37,14 +37,14 @@ int addNum (const char* s, int type) {
 	if (index == -1) {
 		index = addToSymbolTable(s, type, NUM_TKN);
 	}
-
+	cout << "addNum " << s << " " << type << " " << index << endl;
+	
 	return index;
 }
 
 int getSymbolSize (symbolStruct sym) {
-	if (sym.is_reference) {
-		return 4;
-	} else if (sym.symbol_token == VAR_TKN) {
+cout << "getSymbolSize " << " " << sym.symbol_name << "\t" << tokenToString(sym.symbol_type) << "\t" << tokenToString(sym.symbol_token) << endl;
+	if (sym.symbol_token == VAR_TKN) {
 		if (sym.symbol_type == REAL_TKN) {
 			return 8;
 		} else if (sym.symbol_type == INTEGER_TKN) {
@@ -59,7 +59,9 @@ int getSymbolSize (symbolStruct sym) {
 		}
 		int elemCount = sym.array.array_stopValue - sym.array.array_startValue + 1; // zeby sie zgadzala liczba elementow
 		return elemCount * tabElemSize;
-	}
+	} else if (sym.is_reference) {
+		return 4;
+	} 
 	return 0;
 }
 
@@ -68,12 +70,18 @@ int generateVarPosition (string name) {
 	int position = 0;
 	
 	if (isGlobal) {
+		cout << "genVarPos " << name << endl;
 		for (int i = 0; i < symbolTable.size(); i++) {
 			if (!symbolTable[i].is_global) {
 				break;
 			}
 			if (symbolTable[i].symbol_name != name) {
 				position += getSymbolSize(symbolTable[i]);
+				
+				//cout << "genVarPas symbol " << symbolTable[i].symbol_name << endl;
+				//cout << "genVarPas symbol " << tokenToString(symbolTable[i].symbol_token) << endl;
+				//cout << "genVarPas symbol " << symbolTable[i].symbol_type << endl;
+			
 			}
 		}
 	} else {
@@ -81,20 +89,29 @@ int generateVarPosition (string name) {
 			if (!symbolTable[i].is_global) {
 				if (symbolTable[i].symbol_address <= 0) {
 					position -= getSymbolSize(symbolTable[i]);
+
+				//cout << "genVarPas symbol !global " << symbolTable[i].symbol_name << endl;
+				//cout << "genVarPas symbol !global " << tokenToString(symbolTable[i].symbol_token) << endl;
+				//cout << "genVarPas symbol !global " << symbolTable[i].symbol_type << endl;
+			
 				}
 			}
 		}
 	}
+
+	cout << "genVarPos posit " << position << endl;
 	return position;
 }
 
 //tworzy zmienną tymczasową
 int generateTmpVar (int type) {
+	cout << "generateTmpVar " << tmpVarCounter << endl;
 	stringstream stringStream;
 	stringStream << "$t" << tmpVarCounter++;
 	int tmpId = addToSymbolTable(stringStream.str().c_str(), type, VAR_TKN);
+	
 	symbolTable[tmpId].symbol_address = generateVarPosition(stringStream.str().c_str());
-
+	cout << "gentmpvar " << tmpId << " " << symbolTable[tmpId].symbol_address << endl;
 	return tmpId;
 }
 
@@ -139,46 +156,6 @@ int findSymbolIndexIfProcOrFunc (const char* symbolName) {
 	return -1;
 }
 
-// przeszukuje tablice symboli
-//int lookup (const char* s, int flag) {
-//	if (flag == 0) {  // szuka tylko po nazwach
-//		for (int i = symbolTable.size() - 1; i >= 0; i--) {
-//			if (symbolTable[i].symbol_name == s) {
-//				return i;
-//			}
-//		}
-//		return -1;
-//	} else if (flag == 1) {  // szuka w globalnych albo w lokalnych
-//		int i = symbolTable.size() - 1;
-//		if (!isGlobal) {  //przeszukujemy w zakresie lokalnym od końca
-//			for (i; i>=0; i--) {
-//				if (symbolTable[i].is_global) { //brak w części lokalnej
-//					return -1;
-//				}
-//				if (symbolTable[i].name == s) { //znalziono w części lokalnej
-//					return i;
-//				}
-//			}
-//		} else {
-//			for (i; i >= 0; i--) { //przeszukiwanie części globalnej
-//				if (symbolTable[i].symbol_name == s) { //znaleziono w części globalnej
-//					return i;
-//				}
-//			}
-//			return -1;
-//		}
-//	} else if (flag == 2) {  // dla funkcji lub procedur
-//		int i = symbolTable.size() - 1;
-//		for (i; i >= 0; i--) {
-//			if (symbolTable[i].symbol_name == s && (symbolTable[i].symbol_token == PROCEDURE_TKN || symbolTable[i].symbol_token == FUNCTION_TKN)) {
-//				return i;
-//			}
-//		}
-//		return -1;
-	}
-//	return -1;
-}
-
 // usuwa z zakresu lokalnego po wyjsciu z funkcji/procedury
 void clearLocalVars () {
 	int tmp = 0;
@@ -215,21 +192,10 @@ string tokenToString (int token) {
 		default:
 			return string("Inny token");
 	}
-	
-//	if (token == REAL_TKN)  return string("Real");
-//	else if (token == INTEGER_TKN)  return string("Integer");
-//	else if (token == PROCEDURE_TKN)  return string("Procedure");
-//	else if (token == FUNCTION_TKN)  return string("Function");
-//	else if (token == ARRAY_TKN)  return string ( "Array");
-//	else if (token == ID_TKN)  return string("Id");
-//	else if (token == NUM_TKN)  return string("Number");
-//	else if (token == VAR_TKN)  return string("Variable");
-//	else if (token == LABEL_TKN)  return string("Label");
-//	else return string("Inny token");
 }
 
 void printSymbolTable () {
-	cout << "\nSymbol Table\n";
+	cout << "\nSymbol table\n";
 	for (int i = 0; i < symbolTable.size(); i++) {
 		symbolStruct sym = symbolTable[i];
 		cout << "; " << i;
@@ -256,7 +222,7 @@ void printSymbolTable () {
 				case ARRAY_TKN:
 					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " array[" << sym.array.array_startValue << ".." << sym.array.array_stopValue << "] of" << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
 					break;
-				case LABEL_TKN;
+				case LABEL_TKN:
 				case PROCEDURE_TKN:
 				case FUNCTION_TKN:
 					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << endl;
@@ -266,18 +232,5 @@ void printSymbolTable () {
 					break;
 			}
 		}
-//		if (sym.symbol_token == ID_TKN) {
-//			cout << tokenToString(sym.token) << " " << sym.symbol_name << endl;
-//		} else if (sym.symbol_token == NUM_TKN) {
-//			cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " " << tokenToString(sym.symbol_type) << endl;
-//		} else if (sym.symbol_token == VAR_TKN) {
-//			cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " " << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
-//		} else if (sym.symbol_token == ARRAY_TKN) {
-//			cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " array[" << sym.array.array_startValue << ".." << sym.array.array_stopValue << "] of" << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
-//		} else if (sym.symbol_token == LABEL_TKN || sym.symbol_token == PROCEDURE_TKN || sym.symbol_token == FUNCTION_TKN) {
-//			cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << endl;
-//		} else {
-//			cout << "OTHER" << sym.symbol_name << " " << sym.symbol_token << " " << sym.symbol_type << " " << sym.symbol_address << endl;
-//		}
 	}
 }

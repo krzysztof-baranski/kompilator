@@ -52,7 +52,6 @@ int generateLabel(); //tworzy now¹ etykietê do skoku
 int generateTmpVar(int type); //tworzy now¹ zmienn¹ tymczasow¹
 int generateVarPosition(string symName=""); //zwraca indeks, pod którym bêdzie nowa zmienna
 int getResultType(int a,int b); //zwraca typ zmiennej wynikowej
-//int lookup(const char* s, int flag);
 int findSymbolIndexByName(const char* symbolName); // przeszukuje tablic� symboli po nazwach
 int findSymbolIndexByScope(const char* symbolName);  // przeszukuje tablic� symboli po nazwach, ale w zaleznosci czy global czy local
 int findSymbolIndexIfProcOrFunc(const char* symbolName); // przeszukuje tablic� symboli szukajac funkcji lub procedury
