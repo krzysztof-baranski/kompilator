@@ -1,0 +1,11 @@
+/pliki
+comp
+emiter.o
+lexer.cpp
+lexer.o
+main.o
+output.asm
+parser.cpp
+parser.o
+parser.h
+symbol.o

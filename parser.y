@@ -5,8 +5,8 @@
 using namespace std;
 
 vector<int> argumentsTmp; //lista dla zmiennych, którym przypisywany jest typ danych
-list<int> funParams; //lista do obliczenia wartości incsp
-arrayStruct arrayTmp;
+list<int> functionParameters; //lista do obliczenia wartości incsp
+arrayStruct array;
 list<pair<int, arrayStruct>> parameters;
 int arrayType; //zmienna pomocnicza przechowująca typ danych tablicy
 int paramsOffset = 8; //8 dla procedur, 12 dla funkcji
@@ -124,7 +124,7 @@ declarations :
 			} else if (type == ARRAY_TKN) { 
 				symbolTable[index].symbol_token = type;
 				symbolTable[index].symbol_type = arrayType;
-				symbolTable[index].array = arrayTmp;
+				symbolTable[index].array = array;
 				symbolTable[index].symbol_address = generateVarPosition(symbolTable[index].symbol_name);
 			} else { 
 				yyerror("Błędny typ");
@@ -143,11 +143,11 @@ type :
 		int start = $3;
 		int stop = $6;
 		arrayType = $9; //przekazanie typu elementów tablicy
-		arrayTmp.array_start = start;
-		arrayTmp.array_startValue = atoi(symbolTable[start].symbol_name.c_str());
-		arrayTmp.array_stop = stop;
-		arrayTmp.array_stopValue = atoi(symbolTable[stop].symbol_name.c_str());
-		arrayTmp.array_argType = arrayType;
+		array.array_start = start;
+		array.array_startValue = atoi(symbolTable[start].symbol_name.c_str());
+		array.array_stop = stop;
+		array.array_stopValue = atoi(symbolTable[stop].symbol_name.c_str());
+		array.array_argType = arrayType;
 	}
 	;
 
@@ -218,12 +218,12 @@ subprogram_head :
 arguments :
 	'(' parameter_list ')'	{
 		//lista dla parametrów funkcji, nadaje kolejne adresy
-		list<int>::iterator it = funParams.begin();
-		for(it; it != funParams.end(); it++) { 
+		list<int>::iterator it = functionParameters.begin();
+		for(it; it != functionParameters.end(); it++) { 
 			symbolTable[*it].symbol_address = paramsOffset;
 			paramsOffset += 4;
 		}
-		funParams.clear();
+		functionParameters.clear();
 	}
 	|
 	;
@@ -237,15 +237,13 @@ parameter_list :
 			if (type == ARRAY_TKN) { 
 				symbolTable[index].symbol_type = arrayType;
 				symbolTable[index].symbol_token = ARRAY_TKN;
-				symbolTable[index].array = arrayTmp;
+				symbolTable[index].array = array;
 			}
 			else { 
 				symbolTable[index].symbol_type = type;
-				
-				symbolTable[index].symbol_token = type;
 			}
-			parameters.push_back(make_pair(type, arrayTmp)); //dodawanie do listy argumentów
-			funParams.push_front(argumentsTmp[i]);
+			parameters.push_back(make_pair(type, array)); //dodawanie do listy argumentów
+			functionParameters.push_front(argumentsTmp[i]);
 		}
 		argumentsTmp.clear();
 	}
@@ -257,13 +255,13 @@ parameter_list :
 			if (type == ARRAY_TKN) { 
 				symbolTable[index].symbol_type = arrayType;
 				symbolTable[index].symbol_token = ARRAY_TKN;
-				symbolTable[index].array = arrayTmp;
+				symbolTable[index].array = array;
 			}
 			else { 
 				symbolTable[index].symbol_type = type;
 			}
-			parameters.push_back(make_pair(type, arrayTmp));
-			funParams.push_front(argumentsTmp[i]);
+			parameters.push_back(make_pair(type, array));
+			functionParameters.push_front(argumentsTmp[i]);
 		}
 		argumentsTmp.clear();
 	}
@@ -348,20 +346,19 @@ variable :
 		}
 		int id = $1;
 		int start = symbolTable[id].array.array_start;
-		int rIndex = generateTmpVar(INTEGER_TKN);
-		generateThreeArgsOperation(MINUS_TKN, index, true, start, true, rIndex, true); //odejmuje od indeksu indeks początkowy
+		int tmpVarIndex = generateTmpVar(INTEGER_TKN);
+		generateThreeArgsOperation(MINUS_TKN, index, true, start, true, tmpVarIndex, true); //odejmuje od indeksu indeks początkowy
 
-		int arrayElemSize = 0;
+		int elementSize = 0;
 		if (symbolTable[id].symbol_type == REAL_TKN) {
-			arrayElemSize = addNum("8", INTEGER_TKN);
+			elementSize = addNum("8", INTEGER_TKN);
+		} else if (symbolTable[id].symbol_type == INTEGER_TKN) {
+			elementSize = addNum("4", INTEGER_TKN);
 		}
-		else if (symbolTable[id].symbol_type == INTEGER_TKN) {
-			arrayElemSize = addNum("4", INTEGER_TKN);
-		}
-		generateThreeArgsOperation(MUL_TKN, rIndex, true, arrayElemSize, true, rIndex, true); //element*pozycja
+		generateThreeArgsOperation(MUL_TKN, tmpVarIndex, true, elementSize, true, tmpVarIndex, true); //element*pozycja
 
 		int varArrayAddress = generateTmpVar(INTEGER_TKN);
-		generateThreeArgsOperation(PLUS_TKN, id, false, rIndex, true, varArrayAddress, true); //adres poczatku tablicy + adres elementu tablicy
+		generateThreeArgsOperation(PLUS_TKN, id, false, tmpVarIndex, true, varArrayAddress, true); //adres poczatku tablicy + adres elementu tablicy
 
 		symbolTable[varArrayAddress].symbol_type = symbolTable[id].symbol_type;
 		symbolTable[varArrayAddress].is_reference = true;
@@ -396,13 +393,13 @@ procedure_statement :
 		int ind = $1;
 		int write = findSymbolIndexByName("write");
 		int read = findSymbolIndexByName("read");
-		if (ind == write || ind == read) { 
+		if (ind == write) { 
 			for (int i = 0; i < argumentsTmp.size(); i++) { 
-				if (ind == read) { 
-					generateOneArgOperation(READ_TKN, argumentsTmp[i], true);
-				} else if (ind == write) { 
-					generateOneArgOperation(WRITE_TKN, argumentsTmp[i], true);
-				}
+				generateOneArgOperation (WRITE_TKN, argumentsTmp[i], true);
+			}
+		} else if (ind == read) {
+			for (int i = 0; i < argumentsTmp.size(); i++) { 
+				generateOneArgOperation(READ_TKN, argumentsTmp[i], true);
 			}
 		} else {
 			string name = symbolTable[ind].symbol_name;
@@ -412,7 +409,10 @@ procedure_statement :
 				YYERROR;
 			}
 			int tmpToken = symbolTable[index].symbol_token;
-			if (tmpToken == PROCEDURE_TKN) { 
+			if (tmpToken != PROCEDURE_TKN) { 
+				yyerror("Nie znaleziono funkcji/procedury");
+				YYERROR;
+			} else {
 				int paramSize = symbolTable[index].parameters.size();
 				if (argumentsTmp.size() < paramSize) { 
 					yyerror("Nieprawidłowa liczba argumentów");
@@ -441,10 +441,10 @@ procedure_statement :
 					}
 
 					//przekazywany typ
-					int passType = symbolTable[id].symbol_type;
+					int passedType = symbolTable[id].symbol_type;
 
 					//gdy typ argumentu i wartości przekzaywanej są różne
-					if (argType != passType) { 
+					if (argType != passedType) { 
 						int tmpVar = generateTmpVar(argType);
 						generateTwoArgsOperation(ASSIGNOP_TKN, id, true, tmpVar, true);
 						id = tmpVar;
@@ -469,10 +469,6 @@ procedure_statement :
 				//inscp
 				int incspNum = addNum(ss.str().c_str(), INTEGER_TKN);
 				generateOneArgOperation(INCSP_TKN, incspNum, true);
-			}
-			else { 
-				yyerror("Nie znaleziono funkcji/procedury");
-				YYERROR;
 			}
 		}
 		argumentsTmp.clear();
