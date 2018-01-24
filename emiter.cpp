@@ -159,8 +159,10 @@ void generateOneArgOperation (int token, int var, bool value) {
 			resultString = stringStream.str();
 			stringStream.str(string());
 			size_t position = resultString.find("#?");
-			stringStream << "#" << -1 * generateVarPosition(string(""));
+			int size = -1 * generateVarPosition(string(""));
+			stringStream << "#" << size;
 			resultString.replace(position, 2, stringStream.str());
+			addNum(to_string(size).c_str(), INTEGER_TKN);
 			stream.write(resultString.c_str(), resultString.size());
 			stringStream.str(string());
 			break;
