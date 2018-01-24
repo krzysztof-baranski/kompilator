@@ -33,12 +33,7 @@ int generateLabel () {
 // s - stała liczbowa (np. "30")
 // type - int lub real
 int addNum (const char* s, int type) {
-	int index = findSymbolIndexByName(s);
-	if (index == -1) {
-		index = addToSymbolTable(s, type, NUM_TKN);
-	}
-	
-	return index;
+	return addToSymbolTable(s, type, NUM_TKN);
 }
 
 int getSymbolSize (symbolStruct sym) {
@@ -193,23 +188,27 @@ void printSymbolTable () {
 		}
 		
 		if (sym.is_reference) {
-			cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " reference " << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
+			if  (sym.symbol_token == ARRAY_TKN) {
+				cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " array[" << sym.array.array_startValue << ".." << sym.array.array_stopValue << "] of " << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;					
+			} else {
+				cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " reference " << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
+			}
 		} else {
 			switch (sym.symbol_token) {
 				case ID_TKN:
 				case LABEL_TKN:
 				case PROCEDURE_TKN:
-				case FUNCTION_TKN:
 					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << endl;
 					break;
 				case NUM_TKN:
+				case FUNCTION_TKN:
 					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " " << tokenToString(sym.symbol_type) << endl;
 					break;
 				case VAR_TKN:
 					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " " << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
 					break;
 				case ARRAY_TKN:
-					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " array[" << sym.array.array_startValue << ".." << sym.array.array_stopValue << "] of" << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
+					cout << tokenToString(sym.symbol_token) << " " << sym.symbol_name << " array[" << sym.array.array_startValue << ".." << sym.array.array_stopValue << "] of " << tokenToString(sym.symbol_type) << " addr offset " << sym.symbol_address << endl;
 					break;
 				default:
 					cout << "OTHER" << sym.symbol_name << " " << sym.symbol_token << " " << sym.symbol_type << " " << sym.symbol_address << endl;
