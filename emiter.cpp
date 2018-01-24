@@ -20,10 +20,8 @@ int getResultType (int a, int b) {
 //zwraca typ symbolu, jeżeli jest referencją, to zwraca typ Integer
 int getSymbolType (int i, bool value) {
 	if (value) {
-		cout << "getSymbolType " << symbolTable[i].symbol_name << " " << value << " " << tokenToString(symbolTable[i].symbol_type) << endl;
 		return symbolTable[i].symbol_type;
 	} else {
-		cout << "getSymbolType " << symbolTable[i].symbol_name << " " << value << " " << "INTEGER" << endl;
 		return INTEGER_TKN;
 	}
 }
@@ -32,20 +30,16 @@ int getSymbolType (int i, bool value) {
 int setTypes (int &leftVar, bool leftValue, int &rightVar, bool rightValue) {
 	int rightType = getSymbolType(rightVar, rightValue);
 	int leftType = getSymbolType(leftVar, leftValue);
-	cout << "setTypes " << tokenToString(rightType) << " " << tokenToString(leftType) << endl;
+
 	if (rightType != leftType) {
 		if (rightType == INTEGER_TKN && leftType == REAL_TKN) {
-			int newRightVar = generateTmpVar(REAL_TKN);
+			int newRightVar = generateTmpVariable(REAL_TKN);
 			generateTwoArgsOperation(INTTOREAL_TKN, rightVar, rightValue, newRightVar, rightValue);
-					
-			cout << "setTypes r = int && l == real" << rightVar << " " << newRightVar<< endl;
-			cout << "setTypes values " << rightValue << endl;
 			rightVar = newRightVar;
 		} else if (leftType == INTEGER_TKN && rightType == REAL_TKN) {
-			int newLeftVar = generateTmpVar(REAL_TKN);
+			int newLeftVar = generateTmpVariable(REAL_TKN);
 			generateTwoArgsOperation(INTTOREAL_TKN, leftVar, leftValue, newLeftVar, leftValue);
 			leftVar = newLeftVar;
-			cout << "setTypes l = int && r == real" << leftVar << endl;
 		} else {
 			cout << "Nie rozpoznano typów zmiennych: " << symbolTable[leftVar].symbol_name.c_str() << " " << symbolTable[rightVar].symbol_name.c_str();
 			yyerror("Nierozpoznano typów");
@@ -60,21 +54,14 @@ bool setResultType (int &resultVar, bool resultValue, int &rightVar, bool rightV
 
 	if (rightType != resultType) {
 		if (resultType == REAL_TKN && rightType == INTEGER_TKN) {
-			cout << "setResultTypes res = real && r == int " << rightVar << " " << resultVar << endl;
-			cout << "SetResTyp vals " << rightValue << " " << resultValue << endl;
 			generateTwoArgsOperation(INTTOREAL_TKN, rightVar, rightValue, resultVar, resultValue);
-			
-			
 			return true;
 		} else if (resultType == INTEGER_TKN && rightType == REAL_TKN) {
 			generateTwoArgsOperation(REALTOINT_TKN, rightVar, rightValue, resultVar, resultValue);
-		
-			cout << "setResultType res = int && r == real" << endl;
 			return true;
 		} else {
 			cout << "Nie rozpoznano typów zmiennych: " << symbolTable[resultVar].symbol_name.c_str() << " " << symbolTable[rightVar].symbol_name.c_str();
 			yyerror("Nierozpoznano typów");
-
 			return false;
 		}
 	} else {
@@ -83,7 +70,7 @@ bool setResultType (int &resultVar, bool resultValue, int &rightVar, bool rightV
 }
 
 // zapisuje do stream'u wynikowy kod asemblerowy
-void writeVar (int i, bool value) {
+void writeVariable (int i, bool value) {
 	if (symbolTable[i].is_reference) {
 		if (value) {
 			stringStream << "*"; //jeżeli referencja, to trzeba wyłuskać adres
@@ -95,32 +82,36 @@ void writeVar (int i, bool value) {
 			stringStream << "BP";
 			if (symbolTable[i].symbol_address >= 0) {
 				stringStream << "+" << symbolTable[i].symbol_address;
-			}
-
-			if (symbolTable[i].symbol_address < 0) {
-				stringStream << symbolTable[i].symbol_address;
-			}
-		}
-	} else if (symbolTable[i].symbol_token == NUM_TKN) {
-		stringStream << "#" << symbolTable[i].symbol_name; //wypisuje liczbę, liczby poprzedzone są #
-	} else if (symbolTable[i].symbol_token == ARRAY_TKN || symbolTable[i].symbol_token == VAR_TKN) {
-	
-		cout << "writeVar tok == array || tok == var" << tokenToString(symbolTable[i].symbol_token) << endl;
-		if (!value) {
-			stringStream << "#";
-		}
-		
-		if (symbolTable[i].is_global) {
-			cout << "writeVar is_global " << symbolTable[i].symbol_address << endl;
-			stringStream << symbolTable[i].symbol_address;
-		} else {
-			stringStream << "BP";
-			if (symbolTable[i].symbol_address <= 0) {
+			} else {
 				stringStream << symbolTable[i].symbol_address;
 			}
 		}
 	} else {
-		yyerror("Nieprawidłowy typ danych\n");
+		switch (symbolTable[i].symbol_token) {
+			case NUM_TKN:
+				stringStream << "#" << symbolTable[i].symbol_name; //wypisuje liczbę, liczby poprzedzone są #
+				break;
+			case ARRAY_TKN:
+			case VAR_TKN:
+				if (!value) {
+					stringStream << "#";
+				}
+				
+				if (symbolTable[i].is_global) {
+					stringStream << symbolTable[i].symbol_address;
+				} else {
+					stringStream << "BP";
+					if (symbolTable[i].symbol_address >= 0) {
+						stringStream << "+" << symbolTable[i].symbol_address;
+					} else {
+						stringStream << symbolTable[i].symbol_address;
+					}
+				}	
+				break;
+			default:
+				cout << "Nieprawidłowy typ danych " << tokenToString(symbolTable[i].symbol_token) << endl; 
+				yyerror("Nieprawidłowy typ danych\n");
+		}
 	}
 }
 
@@ -130,7 +121,7 @@ void generateOneArgOperation (int token, int var, bool value) {
 	if (symbolTable[var].symbol_type == REAL_TKN) {
 		operation = "r ";
 	}
-	cout << "1Op " << tokenToString(token) << " " << var <<endl;
+
 	switch (token) {
 		case FUNCTION_TKN:
 		case PROCEDURE_TKN:
@@ -148,19 +139,19 @@ void generateOneArgOperation (int token, int var, bool value) {
 			break;
 		case INCSP_TKN:
 			stringStream << "\n\tincsp.i "; //increase stack pointer
-			writeVar(var, value);
+			writeVariable(var, value);
 			break;
 		case PUSH_TKN:
 			stringStream << "\n\tpush.i \t";
-			writeVar(var, value);
+			writeVariable(var, value);
 			break;
 		case WRITE_TKN:
 			stringStream << "\n\twrite." << operation;
-			writeVar (var, value);
+			writeVariable (var, value);
 			break;
 		case READ_TKN:
 			stringStream << "\n\tread." << operation << " ";
-			writeVar(var, value);
+			writeVariable(var, value);
 			break;
 		case RETURN_TKN:
 			stringStream << "\n\treturn";
@@ -182,44 +173,38 @@ void generateTwoArgsOperation (int token, int leftVar, bool leftValue, int resul
 	if (symbolTable[resultVar].symbol_type == REAL_TKN) {
 		operation = "r ";
 	}
-	cout << "gen2op " << operation << " " << tokenToString(token) << endl;
+
 	switch (token) {
 		case REALTOINT_TKN:
 			stringStream << "\n\trealtoint.r ";
-			writeVar(leftVar, leftValue);
+			writeVariable(leftVar, leftValue);
 			stringStream << ", ";
-			cout << "2op realtoint " << leftVar << "\t" << resultVar << endl;
-			writeVar(resultVar, resultValue);
+			writeVariable(resultVar, resultValue);
 			break;
 		case INTTOREAL_TKN:
 			stringStream << "\n\tinttoreal.i ";
-			writeVar(leftVar, leftValue);
+			writeVariable(leftVar, leftValue);
 			stringStream << ", ";
-			cout << "2op inttoreal " << leftVar << "\t" << resultVar << endl;
-			writeVar(resultVar, resultValue);
+			writeVariable(resultVar, resultValue);
 			break;
 		case ASSIGNOP_TKN:
-			//setTypes(leftVar, leftValue, resultVar, resultValue);
-			cout << "ASSIGNOP " << "\t" << resultVar << "\t" << resultValue << "\t" << leftVar << "\t" << leftValue << endl;
-			bool setType = setResultType(leftVar, leftValue, resultVar, resultValue);
-			cout << "ASSOP\t" << resultVar << "\t" << setType << endl;			
-			if (!setType) {
+			if (!setResultType(leftVar, leftValue, resultVar, resultValue)) {
 				stringStream << "\n\tmov." << operation << "\t";
-				writeVar(leftVar, leftValue);
+				writeVariable(leftVar, leftValue);
 				stringStream << ", ";
-				writeVar(resultVar, resultValue);
+				writeVariable(resultVar, resultValue);
 			}
  			break;
 	}
 }
 
-void _writeToStream (bool isEquality, const char* s, int &leftVar, bool leftValue, int &rightVar, bool rightValue, int &resultVar, bool resultValue) {
+void writeToStream (bool isEquality, const char* s, int &leftVar, bool leftValue, int &rightVar, bool rightValue, int &resultVar, bool resultValue) {
 	string operation = "i ";
 
 	if (symbolTable[resultVar].symbol_type == REAL_TKN) {
 		operation = "r ";
 	}
-	cout << "_writeToStream " << leftVar << " " << rightVar << endl;
+
 	setTypes(leftVar, leftValue, rightVar, rightValue);
 	stringStream << "\n";
 	stringStream << s;
@@ -230,64 +215,61 @@ void _writeToStream (bool isEquality, const char* s, int &leftVar, bool leftValu
 		}
 	}
 	stringStream << operation << "\t";
-	writeVar(leftVar, leftValue);
+	writeVariable(leftVar, leftValue);
 	stringStream << ", ";
-	writeVar(rightVar, rightValue);
-	cout << "_writeToStr " << leftVar << " " << rightVar << " " << s << endl;
+	writeVariable(rightVar, rightValue);
 	stringStream << ", ";
+
 	if (isEquality) {
 		stringStream << "#" << symbolTable[resultVar].symbol_name;		
-		cout << "_writeToStr isEq result " << resultVar << endl;	
-} else {
-		writeVar(resultVar, resultValue);
-		cout << "_writeToStr !isEq result " << symbolTable[resultVar].symbol_name << " " << symbolTable[resultVar].symbol_address << endl;
+	} else {
+		writeVariable(resultVar, resultValue);
 	}
 }
 
 //dla operacji trójargumentowych
 void generateThreeArgsOperation (int token, int leftVar, bool leftValue, int rightVar, bool rightValue, int resultVar, bool resultValue) {
-
 	switch (token) {
 		// COMPARISON OR MATHEMATICAL OPERATIONS!
 		case OR_TKN:
-			_writeToStream(false, "\tor.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tor.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case AND_TKN:
-			_writeToStream(false, "\tand.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tand.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case DIV_TKN:
-			_writeToStream(false, "\tdiv.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tdiv.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case MOD_TKN:
-			_writeToStream(false, "\tmod.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tmod.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case MUL_TKN:
-			_writeToStream(false, "\tmul.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tmul.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case PLUS_TKN:
-			_writeToStream(false, "\tadd.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tadd.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case MINUS_TKN:
-			_writeToStream(false, "\tsub.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(false, "\tsub.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		// EQUALITY OPERATIONS!
 		case EQ_TKN:
-			_writeToStream(true, "\tje.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(true, "\tje.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case NE_TKN:
-			_writeToStream(true, "\tjne.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(true, "\tjne.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case LT_TKN:
-			_writeToStream(true, "\tjl.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(true, "\tjl.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case LE_TKN:
-			_writeToStream(true, "\tjle.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(true, "\tjle.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case GE_TKN:
-			_writeToStream(true, "\tjge.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(true, "\tjge.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 		case GT_TKN:
-			_writeToStream(true, "\tjg.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
+			writeToStream(true, "\tjg.", leftVar, leftValue, rightVar, rightValue, resultVar, resultValue);
 			break;
 	}
 }

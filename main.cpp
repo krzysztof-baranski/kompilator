@@ -13,7 +13,7 @@ int main (int argc, char *argv[]) {
 	symbolStruct lab0, write, read;
 
 	if (argc < 2) {
-		cerr << "Nie podano pliku do przetworzenia" << '\n';
+		cerr << "Nie podano pliku do przetworzenia" << endl;
 		return -1;
 	} else if (argc == 2) {
 		inputFileName = argv[1];
@@ -22,7 +22,7 @@ int main (int argc, char *argv[]) {
 	inputFile = fopen(inputFileName, "r");
 
 	if (!inputFile) {
-		cerr << "Nie znaleniono pliku o takiej nazwie" << '\n';
+		cerr << "Nie znaleniono pliku o takiej nazwie" << endl;
 		return -1;
 	}
 	yyin = fopen(inputFileName, "r"); //plik wejściowy dla lexera
@@ -31,7 +31,7 @@ int main (int argc, char *argv[]) {
 	stream.open(outputFileName, ofstream::trunc);
 
 	if (!stream.is_open()) {
-		cerr << "Nie można utworzyć pliku wyjściowego" << '\n';
+		cerr << "Nie można utworzyć pliku wyjściowego" << endl;
 		return -1;
 	}
 
