@@ -56,9 +56,9 @@ int findSymbolIndexByScope(const char* symbolName);  // przeszukuje tablicę sym
 int findSymbolIndexIfProcOrFunc(const char* symbolName); // przeszukuje tablicę symboli szukajac funkcji lub procedury
 int getSymbolSize(symbolStruct sym); //zwraca rozmiar elementu
 string tokenToString(int token);	//zwraca string dla tokena
-void generateOneArgOperation(int token, int var, bool value); // generuje kod dla operacji jednoargumentowych
-void generateTwoArgsOperation(int token, int leftVar, bool leftValue, int resultVar, bool resultValue);
-void generateThreeArgsOperation(int token, int leftVar, bool leftValue, int rightVar, bool rightValue, int resultVar, bool resultValue);
+void handleOneArgOperation(int token, int var, bool value); // generuje kod dla operacji jednoargumentowych
+void handleTwoArgsOperation(int token, int leftVar, bool leftValue, int resultVar, bool resultValue);
+void handleThreeArgsOperation(int token, int leftVar, bool leftValue, int rightVar, bool rightValue, int resultVar, bool resultValue);
 void writeToOut(const char* s); //bezpośredni zapis do pliku
 void clearLocalVariables(); // czyści vector zmiennych lokalnych funkcji
 void saveToFile(); //zapisuje wszystko do pliku wyjściowego

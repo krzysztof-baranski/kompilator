@@ -34,11 +34,11 @@ int setTypes (int &leftVar, bool leftValue, int &rightVar, bool rightValue) {
 	if (rightType != leftType) {
 		if (rightType == INTEGER_TKN && leftType == REAL_TKN) {
 			int newRightVar = generateTmpVariable(REAL_TKN);
-			generateTwoArgsOperation(INTTOREAL_TKN, rightVar, rightValue, newRightVar, rightValue);
+			handleTwoArgsOperation(INTTOREAL_TKN, rightVar, rightValue, newRightVar, rightValue);
 			rightVar = newRightVar;
 		} else if (leftType == INTEGER_TKN && rightType == REAL_TKN) {
 			int newLeftVar = generateTmpVariable(REAL_TKN);
-			generateTwoArgsOperation(INTTOREAL_TKN, leftVar, leftValue, newLeftVar, leftValue);
+			handleTwoArgsOperation(INTTOREAL_TKN, leftVar, leftValue, newLeftVar, leftValue);
 			leftVar = newLeftVar;
 		} else {
 			cout << "Nie rozpoznano typów zmiennych: " << symbolTable[leftVar].symbol_name.c_str() << " " << symbolTable[rightVar].symbol_name.c_str();
@@ -54,10 +54,10 @@ bool setResultType (int &resultVar, bool resultValue, int &rightVar, bool rightV
 
 	if (rightType != resultType) {
 		if (resultType == REAL_TKN && rightType == INTEGER_TKN) {
-			generateTwoArgsOperation(INTTOREAL_TKN, rightVar, rightValue, resultVar, resultValue);
+			handleTwoArgsOperation(INTTOREAL_TKN, rightVar, rightValue, resultVar, resultValue);
 			return true;
 		} else if (resultType == INTEGER_TKN && rightType == REAL_TKN) {
-			generateTwoArgsOperation(REALTOINT_TKN, rightVar, rightValue, resultVar, resultValue);
+			handleTwoArgsOperation(REALTOINT_TKN, rightVar, rightValue, resultVar, resultValue);
 			return true;
 		} else {
 			cout << "Nie rozpoznano typów zmiennych: " << symbolTable[resultVar].symbol_name.c_str() << " " << symbolTable[rightVar].symbol_name.c_str();
@@ -116,7 +116,7 @@ void writeVariable (int i, bool value) {
 }
 
 //generuje kod operacji jednoargumentowych
-void generateOneArgOperation (int token, int var, bool value) {
+void handleOneArgOperation (int token, int var, bool value) {
 	string operation = "i ";
 	if (symbolTable[var].symbol_type == REAL_TKN) {
 		operation = "r ";
@@ -170,7 +170,7 @@ void generateOneArgOperation (int token, int var, bool value) {
 }
 
 //dla operacji dwuargumentowych
-void generateTwoArgsOperation (int token, int leftVar, bool leftValue, int resultVar, bool resultValue) {
+void handleTwoArgsOperation (int token, int leftVar, bool leftValue, int resultVar, bool resultValue) {
 	string operation = "i ";
 	if (symbolTable[resultVar].symbol_type == REAL_TKN) {
 		operation = "r ";
@@ -230,7 +230,7 @@ void writeToStream (bool isEquality, const char* s, int &leftVar, bool leftValue
 }
 
 //dla operacji trójargumentowych
-void generateThreeArgsOperation (int token, int leftVar, bool leftValue, int rightVar, bool rightValue, int resultVar, bool resultValue) {
+void handleThreeArgsOperation (int token, int leftVar, bool leftValue, int rightVar, bool rightValue, int resultVar, bool resultValue) {
 	switch (token) {
 		// COMPARISON OR MATHEMATICAL OPERATIONS!
 		case OR_TKN:
